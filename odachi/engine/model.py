@@ -25,9 +25,9 @@ class _OdachiEngine(tf.keras.Model):
         super(OdachiEngine, self).__init__()
 
         self.embed = ConvEmbed(4, knock)
-        self.embed.load_weights(os.path.join(MODEL_DIR, f'models/odachi_embed_v1_e{version}.h5'))
+        self.embed.load_weights(os.path.join(MODEL_DIR, 'models/odachi_embed_v1_e' + version + '.h5'))
 
-        self.classifier = tf.keras.models.load_model(os.path.join(MODEL_DIR, f'models/odachi_class_v1_e{version}.h5'), compile=False)
+        self.classifier = tf.keras.models.load_model(os.path.join(MODEL_DIR, f'models/odachi_class_v1_e' + version + '.h5'), compile=False)
 
     def call(self, adj_matrix, atom_features, num_atoms):
         embed = self.embed([adj_matrix, atom_features])

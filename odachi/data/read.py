@@ -100,7 +100,7 @@ def _find_in_smiles(idx, reactants):
             reactants: list of reactant SMILES.
     Output: reactant: SMILES of reactant that has the indicated atom.
     '''
-    search = f':{idx}]'
+    search = ':' + idx + ']'
     for reactant in reactants:
         if search in reactant:
             return reactant

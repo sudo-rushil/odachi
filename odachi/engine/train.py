@@ -128,8 +128,8 @@ def train_epoch():
 
 def save_model(idx):
     '''Save models for a given epoch number.'''
-    odachi_embed.save_weights(f'odachi_embed_v1_e{idx}.h5')
-    classifier.save(f'odachi_class_v1_e{idx}.h5')
+    odachi_embed.save_weights('odachi_embed_v1_e' + idx + '.h5')
+    classifier.save(f'odachi_class_v1_e' + idx + '.h5')
 
 
 if __name__ == '__main__':
@@ -142,9 +142,9 @@ if __name__ == '__main__':
     EPOCHS = 10
 
     for epoch in range(EPOCHS):
-        print(f'Beginning epoch {epoch}')
+        print('Beginning epoch ' + epoch)
 
         epoch_loss, val_accs = train_epoch()
-        print(f'Epoch {epoch} Training Loss {epoch_loss:.10f}')
-        print(f'Validation Accuracy {val_accs:.4f}')
+        print('Epoch ' + epoch + 'Training Loss ' + epoch_loss)
+        print('Validation Accuracy ' + val_accs)
         save_model(epoch)
