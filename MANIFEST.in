@@ -1,0 +1,3 @@
+recursive-include odachi/engine/ *.h5
+global-include *.h5
+global-include *.py

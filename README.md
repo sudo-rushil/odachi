@@ -1,0 +1,189 @@
+# Odachi
+
+Advanced deep learning-based organic retrosynthesis engine.
+
+# Overview
+
+The Odachi Retrosynthesis Engine provides a platform for predicting organic retrosynthetic disconnections
+using a graph convolutional network. It also exposes two custom Tensorflow layers for performing spectral
+graph convolutions. The engine powers the [retrosynthesis.com](retrosynthesis.com) website, which provides a clean and intuitive interface to run retrosynthetic predictions.
+
+## Requirements
+
+The Odachi Engine is built in Python 3. It has only three requirements to run:
+
+    - TensorFlow 2.x
+    - Scikit-Learn
+    - Numpy
+
+# Reference
+
+## Installation
+
+To download dgaintel, simply use Pypi via pip.
+```sh
+$ pip install odachi
+```
+
+Alternatively, you could install from source.
+```sh
+$ git clone https://github.com/sudo-rushil/odachi
+$ cd odachi
+$ python setup.py install
+```
+
+Verify your installation by running
+```Python
+>>> import odachi
+>>> odachi.engine.model.Odachi()
+'<odachi.engine.model.Odachi object at 0x7f9ec80b3bd0>''
+```
+
+# Examples
+
+### Predict bond disconnection
+This is simple way of finding a retrosynthetic disconnection in a molecule. The input to the model is the SMILES string of the molecule (Ex. Aspirin).
+
+```Python
+from odachi.engine.model import Odachi
+
+odachi = Odachi() # instantiates engine and load up TensorFlow model in backend.
+
+results = odachi('O=C(C)Oc1ccccc1C(=O)O') # call prediction function on an input molecule.
+print(results)
+```
+> {'bonds': [2], 'smiles': 'O=C(C)Oc1ccccc1C(=O)O', 'svg':...}
+
+
+# Documentation
+The Odachi package exposes four main objects: the GraphConv and ConvEmbed TensorFlow layers for spectral graph convolutions with knockdown, the Conv object for representing molecules as graphs, and the Odachi object for top-level predictions.
+
+## Layers
+
+### GraphConv
+
+```Python
+graph_conv = odachi.engine.layers.GraphConv(n,
+                                            num_feat = 41,
+                                            num_atoms = 130,
+                                            activation = tf.nn.elu,
+                                            knockdown = 0.1,
+                                            BATCH_SIZE = 1)
+```
+Layer for performing single-phase spectral graph convolutions. Inherits from `tensorflow.keras.layers.Layer` and has access to all associated methods.
+
+#### Parameters
+
+- n - Layer index for labeling purpose.
+- num_feat - Number of features for each node in graph.
+- num_atoms - Maximum number of nodes over all graphs.
+- activation - Activation function for layer.
+- knockdown - Convolutional knockdown threshold for spectral regularization.
+- BATCH_SIZE - Number of batches in input
+
+### Call
+
+```Python
+A, X = graph_conv([A, X])
+```
+
+#### Parameters
+
+- A - Adjacency matrix of graph. Has dimensions (BATCH_SIZE, num_atoms, num_atoms).
+- X - Features matrix of graph. Has dimensions (BATCH_SIZE, num_atoms, num_feat).
+
+#### Returns
+
+- A - Adjacency matrix of graph. Unchanged from input.
+- X - Convolved features matrix of graph.
+
+### ConvEmbed
+
+```Python
+conv_embed = odachi.engine.layers.ConvEmbed(num_feat = 41,
+                                            num_atoms = 130,
+                                            depth = 10,
+                                            knock = 0.2,
+                                            BATCH_SIZE = 1)
+```
+Model object for performing stacked graph convolutions with the number of features staying constant across layers. Inherits from `tensorflow.keras.Model`.
+
+#### Parameters
+
+- num_feat - Number of features for each node in graph.
+- num_atoms - Maximum number of nodes over all graphs.
+- depth - Number of stacked convolutional layers.
+- knock - Convolutional knockdown threshold.
+- BATCH_SIZE - Number of batches in input.
+
+### Call
+
+```Python
+X = conv_embed([A, X])
+```
+
+#### Parameters
+
+- A - Initial adjacency matrix of graph. Has dimensions (BATCH_SIZE, num_atoms, num_atoms).
+- X - Initial features matrix of graph. Has dimensions (BATCH_SIZE, num_atoms, num_feat).
+
+#### Returns
+
+- X - Fully convolved features matrix of graph.
+
+## Molecular Graph Representation
+
+### Conv
+```Python
+conv = odachi.data.conv.Conv(smiles)
+```
+Convolutional molecule (Conv) object for storing and representing molecules as featurized graphs upon which graph convolutional methods can be applied.
+
+#### Parameters
+
+- smiles - SMILES string representing the molecule to be stored as a featurized graph.
+
+#### Attributes
+
+- smiles - SMILES string of the molecule stored in the object.
+- num_atoms - Number of atoms in the stored molecule.
+- num_feat - Number of features per each atom (default 41).
+- adj_matrix - Adjacency matrix of molecular graph. Padded up to 130 nodes by default.
+- atom_features - Features matrix of molecular graph. Padded up to 130 nodes by default.
+
+
+## Engine
+
+### Odachi
+
+```Python
+odachi = odachi.engine.models.Odachi(knock = 0.0)
+```
+Engine implementation that wraps all three phases of the retrosynthetic prediction process
+to allow for predictions to be made and streamed to the [retrosynthesis.com](retrosynthesis.com) website.
+
+#### Parameters
+
+- knock - Convolutional knockdown threshold for loading saved models.
+
+### Call
+
+```Python
+result_dict = odachi(smiles,
+                     clusters = 2,
+                     version = 9)
+```
+
+#### Parameters
+
+- smiles - SMILES string of the query target molecule.
+- clusters - number of synthons to cluster the target molecule into.
+- version - Version edition of the convolutional embedding to use for prediction. Latest version is 9.
+
+#### Returns
+
+- result_dict - Dictionary containing prediction data.
+    - smiles - Original smiles string of target molecule.
+    - bonds - List of bonds which are predicted to be disconnected.
+    - svg - Raw SVG for rendering the predicted retrosynthetic disconnection.
+    - time - Total prediction runtime.
